@@ -1,0 +1,16 @@
+# Aider Configuration — .NET Project
+
+# Read project context from this file
+read:
+  - CONVENTIONS.md
+
+# Auto-commit settings
+auto-commits: true
+commit-prompt: "feat: {message}"
+
+# Model preferences
+model: claude-sonnet-4-20250514
+
+# Lint command after edits
+lint-cmd: "dotnet build --no-restore"
+test-cmd: "dotnet test --no-build"

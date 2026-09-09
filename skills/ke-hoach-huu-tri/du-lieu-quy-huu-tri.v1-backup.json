@@ -1,0 +1,71 @@
+{
+  "assets": [
+    {
+      "name": "Chứng khoán",
+      "type": "financial",
+      "value": 500000000,
+      "preRate": "7",
+      "yearsToSplit": "0",
+      "spendElsewhere": 0,
+      "postRate": "7"
+    },
+    {
+      "name": "Góp vốn bds",
+      "type": "realestate",
+      "value": 700000000,
+      "preRate": "5",
+      "yearsToSplit": "0",
+      "spendElsewhere": 0,
+      "postRate": "5"
+    },
+    {
+      "name": "Nhà ở",
+      "type": "realestate",
+      "value": 5000000000,
+      "preRate": "0",
+      "yearsToSplit": "4",
+      "spendElsewhere": 3000000000,
+      "postRate": "5"
+    }
+  ],
+  "incomes": [
+    {
+      "name": "Lương hưu",
+      "monthly": 15000000,
+      "startAge": "62",
+      "endAge": ""
+    },
+    {
+      "name": "Thuê nhà",
+      "monthly": 3500000,
+      "startAge": "40",
+      "endAge": ""
+    },
+    {
+      "name": "Thu nhập khác",
+      "monthly": 10000000,
+      "startAge": "40",
+      "endAge": ""
+    }
+  ],
+  "recurringSavings": [
+    {
+      "name": "Tiết kiệm từ lương",
+      "monthly": 10000000,
+      "rate": "4"
+    },
+    {
+      "name": "Tiền thuê nhà",
+      "monthly": 3500000,
+      "rate": "0"
+    }
+  ],
+  "fields": {
+    "currentDebt": 1400000000,
+    "currentAge": "36",
+    "retireAge": "40",
+    "lifeExpectancy": "80",
+    "inflation": "3",
+    "expenseMonthly": 30000000
+  }
+}

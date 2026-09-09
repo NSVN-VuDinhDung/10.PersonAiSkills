@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Công cụ tính quỹ hưu trí</title>
+<style>
+  :root{
+    --pine-900:#122E29;
+    --pine-700:#245047;
+    --pine-500:#3E7568;
+    --stone-100:#ECE7DB;
+    --stone-50:#F6F3EB;
+    --paper:#FFFFFF;
+    --ink:#1C221E;
+    --ink-soft:#5C665F;
+    --gold:#9C7A25;
+    --gold-soft:#D9C58F;
+    --line:#DBD4C3;
+    --serif: Georgia, 'Times New Roman', 'Noto Serif', serif;
+    --sans: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--stone-100);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+  .page{max-width:720px;margin:0 auto;padding:0 0 64px;}
+
+  .hero{background:var(--pine-900);color:var(--stone-50);padding:44px 24px 30px;}
+  .hero h1{font-family:var(--serif);font-size:28px;line-height:1.25;margin:0 0 10px;font-weight:600;}
+  .hero p{margin:0;font-size:14.5px;line-height:1.6;color:#C9D6CE;max-width:52ch;}
+
+  .save-bar{
+    position:sticky;top:0;z-index:10;
+    background:var(--pine-700);
+    padding:12px 16px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .save-bar button{
+    background:var(--gold);color:var(--pine-900);border:none;
+    padding:9px 14px;border-radius:3px;font-size:13.5px;font-weight:600;cursor:pointer;
+  }
+  .save-bar button.secondary{background:transparent;color:#C9D6CE;border:1px solid rgba(255,255,255,0.3);font-weight:400;}
+  .save-bar .status{font-size:12px;color:#C9D6CE;width:100%;}
+
+  .card{background:var(--paper);margin:20px 16px 0;padding:22px 20px;border:1px solid var(--line);border-radius:4px;}
+  .card.assets{background:var(--pine-900);border:none;color:var(--stone-50);}
+  .card.assets h2{color:var(--stone-50);}
+  .card.assets .desc{color:#AFC0B6;border-left-color:rgba(255,255,255,0.25);}
+  .card.assets input[type=number], .card.assets input[type=text]{background:rgba(255,255,255,0.08);color:var(--stone-50);border-color:rgba(255,255,255,0.25);}
+  .card.assets label{color:#C9D6CE;}
+  .card.assets .unit-hint{color:#8FA69A;}
+  .card.assets .result-line{border-top-color:rgba(255,255,255,0.18);}
+  .card.assets .result-line .label{color:#AFC0B6;}
+  .card.assets .result-line .value{color:var(--stone-50);}
+  .card.assets .result-line.final .value{color:var(--gold-soft);}
+
+  .card.shared{border-top:3px solid var(--pine-700);}
+  .card.method{border-top:3px solid var(--gold);}
+  .card.summary{background:var(--pine-900);color:var(--stone-50);border:none;}
+
+  h2{font-family:var(--serif);font-size:19px;font-weight:600;margin:0 0 4px;}
+  .card.summary h2{color:var(--stone-50);}
+  .tag{display:block;font-size:12.5px;color:var(--gold);font-weight:600;margin-bottom:6px;}
+  .card.assets .tag{color:var(--gold-soft);}
+  .desc{font-size:13.5px;line-height:1.6;color:var(--ink-soft);margin:6px 0 18px;border-left:2px solid var(--line);padding-left:12px;}
+  .formula{font-family:'Courier New', monospace;font-size:12px;color:var(--pine-700);background:var(--stone-50);padding:8px 10px;border-radius:3px;margin:0 0 16px;display:block;line-height:1.6;}
+
+  .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:6px;}
+  label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ink-soft);}
+  input[type=number], input[type=text]{font-family:var(--sans);font-size:16px;color:var(--ink);padding:10px 12px;border:1px solid var(--line);border-radius:3px;background:var(--stone-50);width:100%;}
+  input[type=number]:focus, input[type=text]:focus{outline:2px solid var(--pine-500);outline-offset:1px;}
+  select{font-family:var(--sans);font-size:15px;color:var(--ink);padding:10px 12px;border:1px solid var(--line);border-radius:3px;background:var(--stone-50);width:100%;}
+  .card.assets select{background:rgba(255,255,255,0.08);color:var(--stone-50);border-color:rgba(255,255,255,0.25);}
+  .card.assets select option{color:var(--ink);}
+  .unit-hint{font-size:11.5px;color:#8C9089;font-weight:400;}
+
+  .result-line{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;}
+  .result-line .label{font-size:13px;color:var(--ink-soft);}
+  .result-line .value{font-family:var(--serif);font-size:19px;font-weight:600;color:var(--pine-900);}
+  .result-line.hero-num{border-top:none;margin-top:2px;padding-top:0;}
+  .result-line.hero-num .value{font-size:24px;color:var(--gold);}
+  .result-line.final{border-top:1px solid var(--line);}
+  .result-line.final .value{font-size:22px;}
+  .result-line.gap .value{color:var(--gold);}
+
+  .combo-total{margin:20px 16px 0;padding:16px 20px;background:var(--gold-soft);border-radius:4px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;}
+  .combo-total .label{font-size:13px;color:#5C4A12;}
+  .combo-total .value{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--pine-900);}
+
+  .summary .row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.15);}
+  .summary .row:last-child{border-bottom:none;}
+  .summary .row .m{font-size:14px;color:#C9D6CE;}
+  .summary .row .v{font-family:var(--serif);font-size:19px;font-weight:600;}
+  .summary .note{font-size:12.5px;color:#9FB3A8;margin-top:14px;line-height:1.6;}
+
+  .footnote{margin:18px 20px 0;font-size:12px;color:#8C9089;line-height:1.6;}
+
+  .item-row{border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:14px 14px 6px;margin-bottom:12px;position:relative;}
+  .card:not(.assets) .item-row{border-color:var(--line);}
+  .item-row .row-top{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+  .item-row .row-top input[type=text]{flex:1;font-size:14px;padding:8px 10px;}
+  .remove-btn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:var(--stone-50);width:32px;height:32px;border-radius:3px;font-size:16px;line-height:1;cursor:pointer;flex-shrink:0;}
+  .card:not(.assets) .remove-btn{background:var(--stone-50);border-color:var(--line);color:var(--ink);}
+  .item-row-fv{font-size:12.5px;color:var(--gold-soft);text-align:right;padding:6px 0 8px;border-top:1px dashed rgba(255,255,255,0.15);}
+  .card:not(.assets) .item-row-fv{color:var(--gold);border-top-color:var(--line);}
+  .add-btn{width:100%;padding:11px;background:transparent;border:1.5px dashed rgba(255,255,255,0.35);color:var(--stone-50);border-radius:4px;font-size:14px;cursor:pointer;margin-top:4px;}
+  .add-btn:hover{background:rgba(255,255,255,0.06);}
+  .card:not(.assets) .add-btn{border-color:var(--line);color:var(--ink-soft);}
+
+  input.money-input{text-align:right;font-variant-numeric:tabular-nums;letter-spacing:0.2px;}
+
+  .pr-row{border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .pr-row .pr-name{font-size:14px;font-weight:600;color:var(--ink);}
+  .pr-row label{flex:1;min-width:200px;margin:0;}
+
+  .phase-row{display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px dashed var(--line);gap:10px;flex-wrap:wrap;}
+  .phase-row:first-child{padding-top:0;}
+  .phase-row .phase-age{font-size:13px;color:var(--ink-soft);}
+  .phase-row .phase-amount{font-family:var(--serif);font-size:18px;font-weight:600;color:var(--gold);}
+
+  @media (min-width:520px){.grid.two{grid-template-columns:1fr 1fr;}.grid.three{grid-template-columns:1fr 1fr 1fr;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <h1>Cần bao nhiêu tiền để nghỉ hưu?</h1>
+    <p>Tính từ tài sản hiện có, nhiều khoản đầu tư và bất động sản khác lãi suất, cùng các nguồn thu nhập hưu trí bắt đầu ở từng mốc tuổi khác nhau (lương hưu, cho thuê nhà...).</p>
+  </div>
+
+  <div class="save-bar">
+    <button type="button" id="exportBtn">⬇️ Tải file dữ liệu về máy</button>
+    <button type="button" class="secondary" id="importBtn">⬆️ Tải file lên để khôi phục</button>
+    <input type="file" id="fileInput" accept=".json" style="display:none;">
+    <span class="status" id="saveStatus"></span>
+  </div>
+
+  <div class="card shared">
+    <h2>Thời gian &amp; lạm phát</h2>
+    <div class="desc">Nhập trước phần này — các công thức tính tài sản và quỹ hưu trí bên dưới đều dựa vào số năm còn lại và mức lạm phát ở đây.</div>
+    <div class="grid two">
+      <label>Tuổi hiện tại
+        <input type="number" id="currentAge" value="30" min="18" max="80">
+      </label>
+      <label>Tuổi dự định nghỉ hưu
+        <input type="number" id="retireAge" value="60" min="30" max="80">
+      </label>
+      <label>Tuổi thọ kỳ vọng
+        <input type="number" id="lifeExpectancy" value="80" min="50" max="110">
+      </label>
+      <label>Lạm phát dự kiến (%/năm)
+        <input type="number" id="inflation" value="3" step="0.1">
+      </label>
+    </div>
+  </div>
+
+  <div class="card assets">
+    <span class="tag">Tài sản</span>
+    <h2>Tất cả tài sản</h2>
+    <div class="desc">Chọn "Loại" cho từng khoản để hiện đúng ô cần nhập. Mỗi khoản có thể trích một phần dùng vào việc khác (không đầu tư tiếp) tại một mốc năm nào đó — mặc định 0 nghĩa là giữ nguyên toàn bộ đến lúc nghỉ hưu.</div>
+    <div id="assetRows"></div>
+    <button type="button" class="add-btn" id="addAssetBtn">+ Thêm tài sản</button>
+
+    <label style="margin-top:18px;">Nợ hiện tại cần trả
+      <input type="text" inputmode="numeric" class="money-input" id="currentDebt" value="0">
+      <span class="unit-hint">đơn vị: VNĐ, khoản cố định — không tính lãi</span>
+    </label>
+
+    <div class="result-line">
+      <span class="label">Tổng tất cả tài sản, quy đổi tại lúc nghỉ hưu</span>
+      <span class="value" id="a1-grown">–</span>
+    </div>
+    <div class="result-line final">
+      <span class="label">Sau khi trừ nợ (cố định, không lãi)</span>
+      <span class="value" id="a1-fv">–</span>
+    </div>
+  </div>
+
+  <div class="card assets">
+    <span class="tag">Tiết kiệm định kỳ</span>
+    <h2>Tiết kiệm hàng tháng từ lương (đang duy trì)</h2>
+    <div class="desc">Số tiền bạn hiện đang để dành đều đặn mỗi tháng từ thu nhập đi làm, trước khi nghỉ hưu — khác với "cần tiết kiệm thêm mỗi tháng" ở các cách tính bên dưới (đó là phần <em>bổ sung</em> nếu các khoản này chưa đủ). Có thể thêm nhiều khoản, mỗi khoản một lãi suất riêng (VD: tiết kiệm ngân hàng, DCA chứng khoán, bảo hiểm tích lũy...).</div>
+    <div id="recurringRows"></div>
+    <button type="button" class="add-btn" id="addRecurringBtn">+ Thêm khoản tiết kiệm định kỳ</button>
+    <div class="result-line final">
+      <span class="label">Tổng các khoản, quy đổi tại lúc nghỉ hưu (đã tính lãi kép hàng tháng)</span>
+      <span class="value" id="monthlySavingFV">–</span>
+    </div>
+  </div>
+
+  <div class="combo-total">
+    <span class="label">Tổng tài sản dự kiến tại lúc nghỉ hưu (đã trừ nợ)</span>
+    <span class="value" id="combo-fv">–</span>
+  </div>
+
+  <div class="card shared">
+    <h2>Sau khi nghỉ hưu</h2>
+    <div class="desc">Mỗi tài sản có thể tiếp tục sinh lời khác đi sau khi bạn nghỉ hưu (VD: chuyển sang danh mục an toàn hơn). Tên được lấy tự động từ danh sách Tài sản — bạn chỉ cần nhập lại % kỳ vọng cho từng khoản.</div>
+    <div id="postReturnRows"></div>
+    <div class="result-line">
+      <span class="label">Lợi nhuận bình quân danh mục sau khi nghỉ hưu (theo tỷ trọng từng khoản)</span>
+      <span class="value" id="postReturnDisplay">–</span>
+    </div>
+    <div class="desc" style="margin-top:16px;">Các nguồn thu nhập trong hưu trí — mỗi nguồn có thể bắt đầu và kết thúc ở tuổi khác nhau. Số tiền nhập theo giá trị thực (sức mua hôm nay), giả định không đổi qua thời gian. Để trống "Tuổi kết thúc" nếu nhận đến hết đời.</div>
+    <div id="incomeRows"></div>
+    <button type="button" class="add-btn" id="addIncomeBtn">+ Thêm nguồn thu nhập (lương hưu, cho thuê nhà...)</button>
+  </div>
+
+  <div class="card method">
+    <span class="tag">Cách 1 — kịch bản thận trọng</span>
+    <h2>Quy tắc 4%</h2>
+    <div class="desc">Giả định <strong>không có</strong> lương hưu hay bất kỳ thu nhập nào khác — quỹ phải tự gánh toàn bộ chi phí mãi mãi, rút 4%/năm. Dùng để biết mức tối đa cần chuẩn bị nếu các nguồn thu nhập khác không như kỳ vọng.</div>
+    <span class="formula">Quỹ cần = Chi phí năm ÷ 4%</span>
+    <div class="grid">
+      <label>Chi phí sinh hoạt mong muốn / tháng, theo giá trị hôm nay
+        <input type="text" inputmode="numeric" class="money-input" id="expenseMonthly" value="15.000.000">
+        <span class="unit-hint">đơn vị: VNĐ</span>
+      </label>
+    </div>
+    <div class="result-line hero-num">
+      <span class="label">Cần bao nhiêu mỗi tháng để sống (giả định không có thu nhập nào khác, giá trị tại lúc nghỉ hưu)</span>
+      <span class="value" id="r1-monthly">–</span>
+    </div>
+    <div class="result-line">
+      <span class="label">Quỹ hưu trí cần có (tổng)</span>
+      <span class="value" id="r1-corpus">–</span>
+    </div>
+    <div class="result-line">
+      <span class="label">Tài sản dự kiến tại lúc nghỉ hưu</span>
+      <span class="value" id="r1-assets">–</span>
+    </div>
+    <div class="result-line gap final">
+      <span class="label">Phần còn thiếu, cần tích lũy thêm</span>
+      <span class="value" id="r1-gap">–</span>
+    </div>
+    <div class="result-line">
+      <span class="label">Cần tiết kiệm thêm mỗi tháng từ nay</span>
+      <span class="value" id="r1-save">–</span>
+    </div>
+    <div class="result-line">
+      <span class="label">Lợi nhuận thực bạn đang giả định (sau nghỉ hưu)</span>
+      <span class="value" id="r1-postreturn">–</span>
+    </div>
+    <div class="result-line">
+      <span class="label">Đánh giá</span>
+      <span class="value" id="r1-sustain">–</span>
+    </div>
+  </div>
+
+  <div class="card method">
+    <span class="tag">Cách 2 — kịch bản thực tế</span>
+    <h2>Dòng tiền hưu trí theo từng giai đoạn</h2>
+    <div class="desc">Tính đúng từng năm: quỹ chỉ cần bù phần <em>thiếu hụt</em> giữa chi phí và các nguồn thu nhập đang hoạt động ở năm đó, rồi chiết khấu về thời điểm nghỉ hưu. Mỗi khi có thêm một nguồn thu nhập mới bắt đầu (hoặc kết thúc), mức cần bù mỗi tháng sẽ đổi theo — dưới đây liệt kê đầy đủ từng giai đoạn.</div>
+    <span class="formula">Quỹ cần = Σ (Chi phí năm t − Thu nhập năm t) ÷ (1+r)ᵗ</span>
+    <div id="r2-phases"></div>
+    <div class="result-line">
+      <span class="label">Quỹ hưu trí cần có (tổng, đã chiết khấu theo từng năm)</span>
+      <span class="value" id="r2-corpus">–</span>
+    </div>
+    <div class="result-line">
+      <span class="label">Tài sản dự kiến tại lúc nghỉ hưu</span>
+      <span class="value" id="r2-assets">–</span>
+    </div>
+    <div class="result-line gap final">
+      <span class="label">Phần còn thiếu, cần tích lũy thêm</span>
+      <span class="value" id="r2-gap">–</span>
+    </div>
+    <div class="result-line">
+      <span class="label">Cần tiết kiệm thêm mỗi tháng từ nay</span>
+      <span class="value" id="r2-save">–</span>
+    </div>
+  </div>
+
+  <div class="card summary">
+    <h2>So sánh nhanh — phần còn thiếu</h2>
+    <div class="row"><span class="m">Cách 1 — Quy tắc 4% (thận trọng, không tính lương hưu)</span><span class="v" id="s1">–</span></div>
+    <div class="row"><span class="m">Cách 2 — Dòng tiền theo từng giai đoạn (thực tế)</span><span class="v" id="s2">–</span></div>
+    <div class="note">Cách 1 luôn cho số lớn hơn vì bỏ qua toàn bộ lương hưu và thu nhập khác — coi đây là mức trần an toàn. Cách 2 phản ánh đúng dòng tiền thực tế của bạn, nên thường là con số nên dùng để lên kế hoạch tiết kiệm hàng tháng.</div>
+  </div>
+
+  <div class="footnote">Công cụ mang tính minh họa, không thay thế tư vấn tài chính cá nhân. Số tiền các nguồn thu nhập hưu trí được giả định giữ nguyên giá trị thực (sức mua) suốt thời gian nhận — nếu lương hưu của bạn được điều chỉnh theo cách khác, hãy coi kết quả là ước lượng gần đúng. Dữ liệu chỉ lưu khi bạn bấm "Tải file dữ liệu về máy" và được khôi phục bằng cách tải file đó lên lại — không tự động lưu ở đâu khác.</div>
+
+</div>
+
+<script>
+function fmt(n){
+  if(!isFinite(n) || isNaN(n)) return '–';
+  n = Math.round(n);
+  return n.toLocaleString('vi-VN') + ' đ';
+}
+function val(id){ return parseFloat(document.getElementById(id).value) || 0; }
+
+function formatVN(n){
+  n = Math.round(Number(n)||0);
+  return n.toLocaleString('vi-VN');
+}
+function parseMoney(str){
+  if(str === null || str === undefined) return 0;
+  const cleaned = String(str).replace(/[^0-9\-]/g,'');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+function moneyVal(id){ return parseMoney(document.getElementById(id).value); }
+function onMoneyInput(e){
+  const el = e.target;
+  const digits = el.value.replace(/[^0-9]/g,'');
+  el.value = digits === '' ? '' : formatVN(digits);
+  calculate();
+}
+
+function monthlySavingsNeeded(gap, years, annualReturnPct){
+  if(gap <= 0) return 0;
+  const n = years * 12;
+  if(n <= 0) return gap;
+  const i = (annualReturnPct/100) / 12;
+  if(i === 0) return gap / n;
+  const factor = (Math.pow(1+i, n) - 1) / i * (1+i);
+  return gap / factor;
+}
+
+// ---------------------------------------------------------------
+// Tài sản 1: danh sách khoản đầu tư
+// ---------------------------------------------------------------
+let assetIdCounter = 0;
+
+function addAssetRow(name, type, value, preRate, yearsToSplit, spendElsewhere, postRate){
+  const container = document.getElementById('assetRows');
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  assetIdCounter++;
+  row.dataset.assetId = 'asset-' + assetIdCounter;
+  type = type || 'financial';
+  const rateLabel = type === 'realestate' ? 'Tốc độ tăng giá / năm (%)' : 'Lợi nhuận trước nghỉ hưu (%/năm)';
+  row.innerHTML = `
+    <div class="row-top">
+      <input type="text" class="asset-name" placeholder="Tên tài sản (VD: Sổ tiết kiệm, Căn nhà đang ở)" value="${name}">
+      <button type="button" class="remove-btn">×</button>
+    </div>
+    <div class="grid two">
+      <label>Loại tài sản
+        <select class="asset-type">
+          <option value="financial" ${type==='financial'?'selected':''}>Tài chính (tiết kiệm, chứng khoán, góp vốn...)</option>
+          <option value="realestate" ${type==='realestate'?'selected':''}>Bất động sản / tài sản khác (chuyển thành tiền khi bán)</option>
+        </select>
+      </label>
+      <label>Giá trị hiện tại
+        <input type="text" inputmode="numeric" class="asset-value money-input" value="${formatVN(value)}">
+        <span class="unit-hint">đơn vị: VNĐ</span>
+      </label>
+      <label class="asset-rate-label">${rateLabel}
+        <input type="number" class="asset-rate-pre" value="${preRate}" step="0.1">
+      </label>
+      <label>Số năm nữa dự kiến trích ra một phần / bán
+        <input type="number" class="asset-years-split" value="${yearsToSplit || 0}" min="0">
+        <span class="unit-hint">để 0 nếu giữ nguyên đến lúc nghỉ hưu</span>
+      </label>
+      <label>Số tiền dự kiến dùng vào việc khác tại thời điểm đó (không đầu tư tiếp)
+        <input type="text" inputmode="numeric" class="asset-spend money-input" value="${formatVN(spendElsewhere || 0)}">
+        <span class="unit-hint">đơn vị: VNĐ, để 0 nếu giữ nguyên toàn bộ</span>
+      </label>
+    </div>
+    <div class="item-row-fv"><span class="fv-text">–</span></div>
+  `;
+  container.appendChild(row);
+  row.querySelector('.remove-btn').addEventListener('click', () => { row.remove(); syncPostReturnRows(); calculate(); });
+  row.querySelector('.asset-value').addEventListener('input', onMoneyInput);
+  row.querySelector('.asset-spend').addEventListener('input', onMoneyInput);
+  row.querySelector('.asset-name').addEventListener('input', () => { syncPostReturnRows(); calculate(); });
+  row.querySelector('.asset-rate-pre').addEventListener('input', calculate);
+  row.querySelector('.asset-years-split').addEventListener('input', calculate);
+  row.querySelector('.asset-type').addEventListener('change', (e) => {
+    row.querySelector('.asset-rate-label').firstChild.textContent =
+      e.target.value === 'realestate' ? 'Tốc độ tăng giá / năm (%)' : 'Lợi nhuận trước nghỉ hưu (%/năm)';
+    calculate();
+  });
+
+  syncPostReturnRows();
+  // Nếu có postRate truyền vào (khi khôi phục từ file), gán cho dòng lãi suất sau nghỉ hưu tương ứng
+  if(postRate !== undefined && postRate !== null){
+    const prRow = document.querySelector(`#postReturnRows .pr-row[data-asset-id="${row.dataset.assetId}"]`);
+    if(prRow) prRow.querySelector('.pr-rate').value = postRate;
+  }
+}
+document.getElementById('addAssetBtn').addEventListener('click', () => { addAssetRow('', 'financial', 0, 7, 0, 0); calculate(); });
+
+// ---------------------------------------------------------------
+// Danh sách "lợi nhuận sau nghỉ hưu" — tự đồng bộ tên theo danh sách Tài sản
+// ---------------------------------------------------------------
+function syncPostReturnRows(){
+  const assetRows = Array.from(document.querySelectorAll('#assetRows .item-row'));
+  const container = document.getElementById('postReturnRows');
+  const existing = {};
+  container.querySelectorAll('.pr-row').forEach(r => { existing[r.dataset.assetId] = r; });
+
+  const seen = new Set();
+  assetRows.forEach(row => {
+    const id = row.dataset.assetId;
+    seen.add(id);
+    const name = row.querySelector('.asset-name').value.trim() || '(Chưa đặt tên)';
+    let prRow = existing[id];
+    if(!prRow){
+      const defaultPost = row.querySelector('.asset-rate-pre').value || 7;
+      prRow = document.createElement('div');
+      prRow.className = 'pr-row';
+      prRow.dataset.assetId = id;
+      prRow.innerHTML = `
+        <span class="pr-name"></span>
+        <label>Lợi nhuận kỳ vọng sau nghỉ hưu (%/năm)
+          <input type="number" class="pr-rate" value="${defaultPost}" step="0.1">
+        </label>
+      `;
+      container.appendChild(prRow);
+      prRow.querySelector('.pr-rate').addEventListener('input', calculate);
+    } else {
+      container.appendChild(prRow); // giữ đúng thứ tự theo danh sách Tài sản
+    }
+    prRow.querySelector('.pr-name').textContent = name;
+  });
+  Object.keys(existing).forEach(id => {
+    if(!seen.has(id)) existing[id].remove();
+  });
+}
+
+
+// ---------------------------------------------------------------
+// Thu nhập hưu trí: danh sách nguồn thu nhập theo mốc tuổi
+// ---------------------------------------------------------------
+function addIncomeRow(name, monthly, startAge, endAge){
+  const container = document.getElementById('incomeRows');
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <div class="row-top">
+      <input type="text" class="income-name" placeholder="Tên nguồn thu nhập (VD: Lương hưu)" value="${name}">
+      <button type="button" class="remove-btn">×</button>
+    </div>
+    <div class="grid three">
+      <label>Số tiền / tháng (giá trị thực)
+        <input type="text" inputmode="numeric" class="income-monthly money-input" value="${formatVN(monthly)}">
+      </label>
+      <label>Tuổi bắt đầu nhận
+        <input type="number" class="income-start" value="${startAge}">
+      </label>
+      <label>Tuổi kết thúc (để trống = hết đời)
+        <input type="number" class="income-end" value="${endAge === null || endAge === undefined ? '' : endAge}">
+      </label>
+    </div>
+  `;
+  container.appendChild(row);
+  row.querySelector('.remove-btn').addEventListener('click', () => { row.remove(); calculate(); });
+  row.querySelector('.income-monthly').addEventListener('input', onMoneyInput);
+  row.querySelector('.income-name').addEventListener('input', calculate);
+  row.querySelector('.income-start').addEventListener('input', calculate);
+  row.querySelector('.income-end').addEventListener('input', calculate);
+}
+document.getElementById('addIncomeBtn').addEventListener('click', () => { addIncomeRow('', 0, 60, null); calculate(); });
+
+// ---------------------------------------------------------------
+// Tiết kiệm định kỳ hàng tháng: danh sách nhiều khoản, mỗi khoản 1 lãi suất riêng
+// ---------------------------------------------------------------
+function addRecurringRow(name, monthly, rate){
+  const container = document.getElementById('recurringRows');
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <div class="row-top">
+      <input type="text" class="rec-name" placeholder="Tên khoản (VD: Tiết kiệm ngân hàng, DCA chứng khoán...)" value="${name}">
+      <button type="button" class="remove-btn">×</button>
+    </div>
+    <div class="grid two">
+      <label>Số tiền / tháng
+        <input type="text" inputmode="numeric" class="rec-monthly money-input" value="${formatVN(monthly)}">
+        <span class="unit-hint">đơn vị: VNĐ</span>
+      </label>
+      <label>Lợi nhuận kỳ vọng (%/năm)
+        <input type="number" class="rec-rate" value="${rate}" step="0.1">
+      </label>
+    </div>
+    <div class="item-row-fv"><span class="fv-text">–</span></div>
+  `;
+  container.appendChild(row);
+  row.querySelector('.remove-btn').addEventListener('click', () => { row.remove(); calculate(); });
+  row.querySelector('.rec-monthly').addEventListener('input', onMoneyInput);
+  row.querySelector('.rec-name').addEventListener('input', calculate);
+  row.querySelector('.rec-rate').addEventListener('input', calculate);
+}
+document.getElementById('addRecurringBtn').addEventListener('click', () => { addRecurringRow('', 0, 7); calculate(); });
+
+// ---------------------------------------------------------------
+// Tính toán chính
+// ---------------------------------------------------------------
+function calculate(){
+  const currentAge = val('currentAge');
+  const retireAge = val('retireAge');
+  const lifeExpectancy = val('lifeExpectancy');
+  const inflation = val('inflation') / 100;
+  const yearsToRetire = Math.max(retireAge - currentAge, 0);
+  const retirementYears = Math.max(lifeExpectancy - retireAge, 1);
+
+  // ---- Tài sản (danh sách gộp: tài chính + bất động sản) ----
+  const assetRows = Array.from(document.querySelectorAll('#assetRows .item-row'));
+
+  // Lượt 1: tính lợi nhuận bình quân trước nghỉ hưu (avgRate), theo tỷ trọng giá trị hôm nay
+  let weightedPreSum = 0, totalValueToday = 0;
+  assetRows.forEach(row => {
+    const v = parseMoney(row.querySelector('.asset-value').value);
+    const preRate = parseFloat(row.querySelector('.asset-rate-pre').value) || 0;
+    weightedPreSum += v * preRate;
+    totalValueToday += v;
+  });
+  const avgRate = totalValueToday > 0 ? (weightedPreSum / totalValueToday) : 7;
+
+  // Lượt 2: tính giá trị từng tài sản tại lúc nghỉ hưu, tuỳ theo loại
+  let totalGrown = 0, weightedPostSum = 0;
+  assetRows.forEach(row => {
+    const v = parseMoney(row.querySelector('.asset-value').value);
+    const preRate = parseFloat(row.querySelector('.asset-rate-pre').value) || 0;
+    const type = row.querySelector('.asset-type').value;
+    const splitYears = Math.max(parseFloat(row.querySelector('.asset-years-split').value) || 0, 0);
+    const spend = parseMoney(row.querySelector('.asset-spend').value);
+    const prRow = document.querySelector(`#postReturnRows .pr-row[data-asset-id="${row.dataset.assetId}"]`);
+    const postRate = prRow ? (parseFloat(prRow.querySelector('.pr-rate').value) || 0) : preRate;
+
+    let fv, atSplitValue;
+    if(type === 'realestate'){
+      const appreciationYears = Math.min(splitYears, yearsToRetire);
+      const investYearsAfter = Math.max(yearsToRetire - splitYears, 0);
+      atSplitValue = v * Math.pow(1 + preRate/100, appreciationYears);
+      const spendCapped = Math.min(spend, atSplitValue);
+      const reinvestAmount = atSplitValue - spendCapped;
+      fv = reinvestAmount * Math.pow(1 + avgRate/100, investYearsAfter);
+      let fvText = `→ giá trị khi bán: ${fmt(atSplitValue)}`;
+      if(spendCapped > 0) fvText += ` · dùng việc khác: ${fmt(spendCapped)}`;
+      fvText += ` · quy đổi tại nghỉ hưu: ${fmt(fv)}`;
+      row.querySelector('.fv-text').textContent = fvText;
+    } else {
+      const splitYearsClamped = Math.min(splitYears, yearsToRetire);
+      const investYearsAfter = Math.max(yearsToRetire - splitYears, 0);
+      atSplitValue = v * Math.pow(1 + preRate/100, splitYearsClamped);
+      const spendCapped = Math.min(spend, atSplitValue);
+      const reinvestAmount = atSplitValue - spendCapped;
+      fv = reinvestAmount * Math.pow(1 + preRate/100, investYearsAfter);
+      let fvText = '→ quy đổi tại lúc nghỉ hưu: ' + fmt(fv);
+      if(spendCapped > 0) fvText = `→ giá trị tại thời điểm trích: ${fmt(atSplitValue)} · dùng việc khác: ${fmt(spendCapped)} · ` + fvText.replace('→ ', '');
+      row.querySelector('.fv-text').textContent = fvText;
+    }
+    totalGrown += fv;
+    weightedPostSum += fv * postRate;
+  });
+
+  const postReturn = (totalGrown > 0 ? (weightedPostSum / totalGrown) : 3) / 100;
+  document.getElementById('postReturnDisplay').textContent = (postReturn*100).toFixed(1) + '%/năm';
+
+  const currentDebt = moneyVal('currentDebt');
+  const fvHoldings = totalGrown - currentDebt;
+  document.getElementById('a1-grown').textContent = fmt(totalGrown);
+  document.getElementById('a1-fv').textContent = fmt(fvHoldings);
+
+  // ---- Tiết kiệm định kỳ hàng tháng từ lương (trước khi nghỉ hưu) ----
+  const recurringRows = document.querySelectorAll('#recurringRows .item-row');
+  let fvMonthlySaving = 0;
+  recurringRows.forEach(row => {
+    const monthly = parseMoney(row.querySelector('.rec-monthly').value);
+    const rate = parseFloat(row.querySelector('.rec-rate').value) || 0;
+    const iM = rate/100/12;
+    const nM = yearsToRetire*12;
+    let fv = 0;
+    if(monthly > 0 && nM > 0){
+      fv = iM === 0 ? monthly*nM : monthly * ((Math.pow(1+iM, nM) - 1) / iM) * (1+iM);
+    }
+    row.querySelector('.fv-text').textContent = '→ quy đổi tại lúc nghỉ hưu: ' + fmt(fv);
+    fvMonthlySaving += fv;
+  });
+  document.getElementById('monthlySavingFV').textContent = fmt(fvMonthlySaving);
+
+  const fvAssets = fvHoldings + fvMonthlySaving;
+  document.getElementById('combo-fv').textContent = fmt(fvAssets);
+
+  // ---- Chi phí sinh hoạt tại thời điểm nghỉ hưu ----
+  const expenseMonthly = moneyVal('expenseMonthly');
+  const expenseYearlyAtRetire = expenseMonthly * 12 * Math.pow(1+inflation, yearsToRetire);
+
+  // ---- Cách 1: Quy tắc 4% (không tính thu nhập khác) ----
+  const corpus1 = expenseYearlyAtRetire / 0.04;
+  const gap1 = Math.max(corpus1 - fvAssets, 0);
+  const save1 = monthlySavingsNeeded(gap1, yearsToRetire, avgRate);
+
+  document.getElementById('r1-monthly').textContent = fmt(expenseYearlyAtRetire/12);
+  document.getElementById('r1-corpus').textContent = fmt(corpus1);
+  document.getElementById('r1-assets').textContent = fmt(fvAssets);
+  document.getElementById('r1-gap').textContent = fmt(gap1);
+  document.getElementById('r1-save').textContent = fmt(save1) + ' / tháng';
+
+  const postReturnPct = postReturn * 100;
+  document.getElementById('r1-postreturn').textContent = postReturnPct.toFixed(1) + '%/năm';
+  const sustainEl = document.getElementById('r1-sustain');
+  if(postReturnPct >= 4){
+    sustainEl.textContent = 'Đủ để quỹ duy trì vô thời hạn';
+    sustainEl.style.color = 'var(--pine-700)';
+  } else {
+    sustainEl.textContent = 'Chưa đủ 4% — quỹ sẽ cạn dần theo thời gian';
+    sustainEl.style.color = 'var(--gold)';
+  }
+
+  // ---- Cách 2: Dòng tiền hưu trí theo từng giai đoạn ----
+  const incomeRows = document.querySelectorAll('#incomeRows .item-row');
+  const incomeSources = [];
+  incomeRows.forEach(row => {
+    const monthly = parseMoney(row.querySelector('.income-monthly').value);
+    const startAge = parseFloat(row.querySelector('.income-start').value) || 0;
+    const endRaw = row.querySelector('.income-end').value;
+    const endAge = endRaw === '' ? lifeExpectancy : (parseFloat(endRaw) || lifeExpectancy);
+    incomeSources.push({ monthly, startAge, endAge });
+  });
+
+  const yearData = [];
+  for(let t = 1; t <= retirementYears; t++){
+    const age = retireAge + t - 1;
+    let incomeYear = 0;
+    incomeSources.forEach(src => {
+      if(age >= src.startAge && age <= src.endAge){
+        incomeYear += src.monthly * 12;
+      }
+    });
+    yearData.push({ t, age, incomeYear });
+  }
+
+  let corpus2 = 0;
+  yearData.forEach(item => {
+    const gap = Math.max(expenseYearlyAtRetire - item.incomeYear, 0);
+    corpus2 += gap / Math.pow(1 + postReturn, item.t);
+  });
+
+  // Gom các năm liền kề có cùng mức thu nhập thành từng giai đoạn để hiển thị
+  const phases = [];
+  let segStartAge = yearData[0].age;
+  let segIncome = yearData[0].incomeYear;
+  for(let i = 1; i < yearData.length; i++){
+    if(yearData[i].incomeYear !== segIncome){
+      phases.push({ startAge: segStartAge, endAge: yearData[i-1].age, gapMonthly: Math.max(expenseYearlyAtRetire - segIncome, 0)/12 });
+      segStartAge = yearData[i].age;
+      segIncome = yearData[i].incomeYear;
+    }
+  }
+  phases.push({ startAge: segStartAge, endAge: yearData[yearData.length-1].age, gapMonthly: Math.max(expenseYearlyAtRetire - segIncome, 0)/12 });
+
+  const phasesContainer = document.getElementById('r2-phases');
+  phasesContainer.innerHTML = '';
+  phases.forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.className = 'phase-row';
+    const ageLabel = p.startAge === p.endAge ? `Tuổi ${p.startAge}` : `Tuổi ${p.startAge}–${p.endAge}`;
+    div.innerHTML = `<span class="phase-age">${ageLabel} (${p.endAge - p.startAge + 1} năm) — cần bù mỗi tháng</span><span class="phase-amount">${fmt(p.gapMonthly)}</span>`;
+    phasesContainer.appendChild(div);
+  });
+
+  const gap2 = Math.max(corpus2 - fvAssets, 0);
+  const save2 = monthlySavingsNeeded(gap2, yearsToRetire, avgRate);
+
+  document.getElementById('r2-corpus').textContent = fmt(corpus2);
+  document.getElementById('r2-assets').textContent = fmt(fvAssets);
+  document.getElementById('r2-gap').textContent = fmt(gap2);
+  document.getElementById('r2-save').textContent = fmt(save2) + ' / tháng';
+
+  // ---- Summary ----
+  document.getElementById('s1').textContent = fmt(gap1);
+  document.getElementById('s2').textContent = fmt(gap2);
+}
+
+// ---------------------------------------------------------------
+// Lưu / khôi phục bằng file JSON trên máy của bạn
+// ---------------------------------------------------------------
+function collectState(){
+  const assets = [];
+  document.querySelectorAll('#assetRows .item-row').forEach(row => {
+    const prRow = document.querySelector(`#postReturnRows .pr-row[data-asset-id="${row.dataset.assetId}"]`);
+    assets.push({
+      name: row.querySelector('.asset-name').value,
+      type: row.querySelector('.asset-type').value,
+      value: parseMoney(row.querySelector('.asset-value').value),
+      preRate: row.querySelector('.asset-rate-pre').value,
+      yearsToSplit: row.querySelector('.asset-years-split').value,
+      spendElsewhere: parseMoney(row.querySelector('.asset-spend').value),
+      postRate: prRow ? prRow.querySelector('.pr-rate').value : row.querySelector('.asset-rate-pre').value
+    });
+  });
+  const incomes = [];
+  document.querySelectorAll('#incomeRows .item-row').forEach(row => {
+    incomes.push({
+      name: row.querySelector('.income-name').value,
+      monthly: parseMoney(row.querySelector('.income-monthly').value),
+      startAge: row.querySelector('.income-start').value,
+      endAge: row.querySelector('.income-end').value
+    });
+  });
+  const recurringSavings = [];
+  document.querySelectorAll('#recurringRows .item-row').forEach(row => {
+    recurringSavings.push({
+      name: row.querySelector('.rec-name').value,
+      monthly: parseMoney(row.querySelector('.rec-monthly').value),
+      rate: row.querySelector('.rec-rate').value
+    });
+  });
+  const fieldIds = ['currentDebt','currentAge','retireAge','lifeExpectancy','inflation','expenseMonthly'];
+  const fields = {};
+  fieldIds.forEach(id => {
+    const el = document.getElementById(id);
+    fields[id] = el.classList.contains('money-input') ? parseMoney(el.value) : el.value;
+  });
+  return { assets, incomes, recurringSavings, fields };
+}
+
+function applyState(state){
+  document.getElementById('assetRows').innerHTML = '';
+  document.getElementById('postReturnRows').innerHTML = '';
+  document.getElementById('incomeRows').innerHTML = '';
+  document.getElementById('recurringRows').innerHTML = '';
+
+  if(state.assets && state.assets.length){
+    state.assets.forEach(a => addAssetRow(a.name, a.type, a.value, a.preRate, a.yearsToSplit, a.spendElsewhere, a.postRate));
+  } else {
+    addAssetRow('Tiết kiệm / đầu tư', 'financial', 0, 7, 0, 0, 7);
+  }
+  if(state.incomes && state.incomes.length){
+    state.incomes.forEach(i => addIncomeRow(i.name, i.monthly, i.startAge, i.endAge === '' ? null : i.endAge));
+  }
+  if(state.recurringSavings && state.recurringSavings.length){
+    state.recurringSavings.forEach(r => addRecurringRow(r.name, r.monthly, r.rate));
+  }
+  if(state.fields){
+    Object.keys(state.fields).forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.value = el.classList.contains('money-input') ? formatVN(state.fields[id]) : state.fields[id];
+    });
+  }
+}
+
+function showStatus(msg, isError){
+  const el = document.getElementById('saveStatus');
+  el.textContent = msg;
+  el.style.color = isError ? '#E3A6A6' : '#C9D6CE';
+  setTimeout(() => { if(el.textContent === msg) el.textContent = ''; }, 4000);
+}
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const state = collectState();
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'du-lieu-quy-huu-tri.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showStatus('Đã tải file về máy ✓');
+});
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('fileInput').click();
+});
+
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try{
+      const state = JSON.parse(evt.target.result);
+      applyState(state);
+      calculate();
+      showStatus('Đã khôi phục dữ liệu từ file ✓');
+    }catch(err){
+      showStatus('File không hợp lệ, thử lại nhé', true);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ---- Khởi tạo mặc định ----
+addAssetRow('Tiết kiệm / đầu tư', 'financial', 0, 7, 0, 0, 7);
+addIncomeRow('Lương hưu', 0, 60, null);
+addRecurringRow('Tiết kiệm từ lương', 0, 7);
+document.querySelectorAll('input:not(.money-input)').forEach(el => el.addEventListener('input', calculate));
+document.querySelectorAll('input.money-input').forEach(el => el.addEventListener('input', onMoneyInput));
+calculate();
+</script>
+</body>
+</html>

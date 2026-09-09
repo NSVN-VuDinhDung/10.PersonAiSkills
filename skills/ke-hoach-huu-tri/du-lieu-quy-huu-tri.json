@@ -1,0 +1,136 @@
+{
+  "meta": {
+    "lastUpdated": "2026-09-09",
+    "version": 6
+  },
+  "living": {
+    "monthly": 15000000,
+    "note": "Sinh hoạt cơ bản, chưa gồm học phí con, BHXH, BHYT"
+  },
+  "assets": [
+    {
+      "name": "Chứng khoán",
+      "type": "financial",
+      "value": 500000000,
+      "preRate": "7",
+      "yearsToSplit": "0",
+      "spendElsewhere": 0,
+      "postRate": "7"
+    },
+    {
+      "name": "Góp vốn bds",
+      "type": "realestate",
+      "value": 700000000,
+      "preRate": "5",
+      "yearsToSplit": "0",
+      "spendElsewhere": 0,
+      "postRate": "5"
+    },
+    {
+      "name": "Nhà ở",
+      "type": "realestate",
+      "value": 5000000000,
+      "preRate": "0",
+      "yearsToSplit": "4",
+      "spendElsewhere": 3000000000,
+      "postRate": "5"
+    }
+  ],
+  "incomes": [
+    {
+      "name": "Thuê nhà",
+      "monthly": 3500000,
+      "startAge": "40",
+      "endAge": ""
+    },
+    {
+      "name": "Thu nhập khác",
+      "monthly": 10000000,
+      "startAge": "40",
+      "endAge": ""
+    }
+  ],
+  "recurringSavings": [
+    {
+      "name": "Tiết kiệm từ lương",
+      "monthly": 10000000,
+      "rate": "4"
+    },
+    {
+      "name": "Tiền thuê nhà",
+      "monthly": 3500000,
+      "rate": "0"
+    }
+  ],
+  "recurringExpenses": [
+    {
+      "name": "BHYT hộ gia đình",
+      "monthly": 200000,
+      "startAge": "40",
+      "endAge": ""
+    },
+    {
+      "name": "Dự phòng chi khoản lớn",
+      "monthly": 2000000,
+      "startAge": "40",
+      "endAge": ""
+    }
+  ],
+  "children": [
+    {
+      "name": "Con gái",
+      "birthYear": "2018",
+      "scenario": "A",
+      "schoolMonthly": 5000000,
+      "uniYearly": 50000000
+    },
+    {
+      "name": "Con 2 (dự kiến)",
+      "birthYear": "2027",
+      "scenario": "A",
+      "schoolMonthly": 5000000,
+      "uniYearly": 50000000
+    },
+    {
+      "name": "Con 3 (dự kiến)",
+      "birthYear": "2027",
+      "scenario": "A",
+      "schoolMonthly": 5000000,
+      "uniYearly": 50000000
+    }
+  ],
+  "reserves": [
+    {
+      "name": "Y tế khẩn cấp / bệnh hiểm nghèo",
+      "amount": 500000000,
+      "neededFromAge": "40",
+      "inflate": false,
+      "tier": "A",
+      "note": "Chỉ rút khi có chẩn đoán bệnh hiểm nghèo, tai nạn nặng"
+    },
+    {
+      "name": "Cầu nối sinh hoạt khi mất thu nhập",
+      "amount": 500000000,
+      "neededFromAge": "40",
+      "inflate": false,
+      "tier": "A",
+      "note": "Dùng khi thu nhập khác ngừng, đến khi kiếm lại được hoặc đến tuổi lương hưu"
+    }
+  ],
+  "bhxh": {
+    "sex": "nam",
+    "paidYears": "11",
+    "paidAvg": 10000000,
+    "volIncome": 40000000,
+    "volYears": "4",
+    "auto": true
+  },
+  "fields": {
+    "currentDebt": 1400000000,
+    "currentAge": "36",
+    "retireAge": "40",
+    "lifeExpectancy": "80",
+    "inflation": "3",
+    "baseYear": "2026"
+  }
+}

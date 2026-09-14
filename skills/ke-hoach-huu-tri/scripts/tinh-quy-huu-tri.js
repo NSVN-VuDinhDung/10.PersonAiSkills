@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Tính quỹ hưu trí — bản CLI tái hiện đúng công thức của "tinh-quy-huu-tri.html" (v7).
+ * Tính quỹ hưu trí — bản CLI tái hiện đúng công thức của "tinh-quy-huu-tri.html" (v8).
  *
  * Cách dùng:
  *   node tinh-quy-huu-tri.js <file-du-lieu.json> [--json] [--set key=value ...]
@@ -205,7 +205,7 @@ function calculate(state) {
     return sum + (atSplit - Math.min(spend, atSplit)) * Math.pow(1 + (type === 'realestate' ? avgRate : preRate) / 100, t - sp);
   }, 0) - currentDebt;
   const track = [];
-  for (let t = 1; t <= Math.max(yearsToRetire, 0); t++) {
+  for (let t = 0; t <= Math.max(yearsToRetire, 0); t++) {
     let goal = assetsAtYear(t) + annuityFV(save2, avgRate, t);
     (state.recurringSavings || []).forEach((r) => { goal += annuityFV(num(r.monthly), num(r.rate), t); });
     const events = assets.filter((a) => {
@@ -216,14 +216,40 @@ function calculate(state) {
       return { name: a.name, amount: Math.min(num(a.spendElsewhere), atSplit) };
     });
     track.push({ yearsFromNow: t, calendarYear: baseYear + t, age: currentAge + t,
-      isRetireYear: t === yearsToRetire, targetNetAssets: goal, spendEvents: events });
+      isStart: t === 0, isRetireYear: t === yearsToRetire, targetNetAssets: goal, spendEvents: events });
   }
+  const targetForYear = (y) => {
+    const e = track.find((x) => x.calendarYear === y);
+    return e ? e.targetNetAssets : null;
+  };
+
+  // ---- Tổng kết hàng năm (v8) ----
+  const netAssetsNow = totalValueToday - currentDebt;
+  const reviews = (state.reviews || []).map((r) => {
+    const year = num(r.year) || baseYear;
+    const extra = num(r.extraAmount);
+    const locked = r.locked === true || r.locked === 'true';
+    const net = locked && r.lockedNetAssets != null ? num(r.lockedNetAssets) : netAssetsNow + extra;
+    const target = locked
+      ? (r.lockedTarget == null ? null : num(r.lockedTarget))
+      : targetForYear(year);
+    const saving = locked && r.lockedMonthlySaving != null ? num(r.lockedMonthlySaving) : save2;
+    const checks = r.checks || {};
+    const doneCount = Object.keys(checks).filter((k) => checks[k]).length;
+    return { year, extraAmount: extra, locked, lockedOn: r.lockedOn || '', note: r.note || '',
+      netAssets: net, target, monthlySaving: saving,
+      diff: target == null ? null : net - target,
+      onTrack: target == null ? null : net >= target,
+      checks, checksDone: doneCount, checksTotal: Object.keys(checks).length };
+  });
 
   return {
     meta: Object.assign({ lastUpdated: null, version: 6 }, state.meta || {}),
     inputs: { currentAge, retireAge, lifeExpectancy, inflationPct: inflation * 100, currentDebt, expenseMonthly, baseYear, yearsToRetire, retirementYears },
     track,
     trackAssumedMonthlySaving: save2,
+    reviews,
+    netAssetsNow,
     warnings: (() => {
       const w = [];
       const dup = (state.incomes || []).filter((i) => /lương hưu|luong huu|hưu trí/i.test(i.name || ''));
@@ -231,6 +257,7 @@ function calculate(state) {
       if (!bhxhAuto && !dup.length) w.push('Tắt bhxh.auto và không có dòng lương hưu nào trong incomes — kế hoạch không có lương hưu.');
       if (childPre > 0) w.push('Chi cho con từ nay đến lúc nghỉ hưu (' + fmt(childPre) + ') KHÔNG bị trừ vào tài sản tích lũy — mô hình không mô phỏng chi tiêu trước nghỉ hưu.');
       const nowYear = new Date().getFullYear();
+      if ((state.reviews || []).length === 0) w.push('Chưa có dòng tổng kết hàng năm nào — mở HTML, mục "Tổng kết hàng năm", thêm một dòng để bắt đầu theo dõi tiến độ.');
       if (baseYear && nowYear > baseYear) w.push('Dữ liệu nhập theo giá năm ' + baseYear + ' nhưng nay đã là ' + nowYear + ' (lệch ' + (nowYear - baseYear) + ' năm). Mở HTML và bấm "Dời mốc thời gian", rồi nhập lại giá trị tài sản thực tế trước khi tin con số.');
       return w;
     })(),
@@ -291,10 +318,25 @@ function printReport(r) {
   L('\n=== LỘ TRÌNH TÍCH LŨY (tổng tài sản đã trừ nợ nên có vào cuối mỗi năm) ===');
   L(`Giả định tiết kiệm thêm ${fmt(r.trackAssumedMonthlySaving)}/tháng ngoài các khoản đang có.`);
   r.track.forEach((x) => {
-    let line = `- Cuối ${x.calendarYear} · bạn ${x.age} tuổi${x.isRetireYear ? ' — NGHỈ HƯU' : ` · còn ${r.inputs.yearsToRetire - x.yearsFromNow} năm`}: ${fmt(x.targetNetAssets)}`;
+    const when = x.isStart ? `Hiện tại (${x.calendarYear}) · bạn ${x.age} tuổi — ĐIỂM XUẤT PHÁT`
+      : `Cuối ${x.calendarYear} · bạn ${x.age} tuổi${x.isRetireYear ? ' — NGHỈ HƯU' : ` · còn ${r.inputs.yearsToRetire - x.yearsFromNow} năm`}`;
+    let line = `- ${when}: ${fmt(x.targetNetAssets)}`;
     x.spendEvents.forEach((e) => { line += `  [năm này bán/trích ${e.name}, chuyển ${fmt(e.amount)} sang việc khác nên mốc tụt xuống]`; });
     L(line);
   });
+  if (r.reviews.length) {
+    L('\n=== TỔNG KẾT HÀNG NĂM ===');
+    r.reviews.forEach((x) => {
+      let line = `- ${x.year}: thực tế ${fmt(x.netAssets)}`;
+      if (x.target == null) line += ' · chưa có mục tiêu để so';
+      else line += ` · mục tiêu ${fmt(x.target)} → ${x.onTrack ? 'ĐI TRƯỚC ' : 'CHẬM '}${fmt(Math.abs(x.diff))}`;
+      line += ` · tiết kiệm thêm ${fmt(x.monthlySaving)}/tháng`;
+      line += x.locked ? `  [đã chốt${x.lockedOn ? ' ' + x.lockedOn : ''}]` : '  [chưa chốt]';
+      if (x.checksTotal) line += ` · checklist ${x.checksDone}/${x.checksTotal}`;
+      if (x.note) line += ` · ${x.note}`;
+      L(line);
+    });
+  }
   if (r.meta.lastUpdated) L(`\nDữ liệu lưu lần gần nhất: ${r.meta.lastUpdated} · năm gốc ${r.inputs.baseYear}`);
 }
 

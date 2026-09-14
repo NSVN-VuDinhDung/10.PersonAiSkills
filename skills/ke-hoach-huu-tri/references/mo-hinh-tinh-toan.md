@@ -1,6 +1,6 @@
-# Mô hình tính toán quỹ hưu trí (v7)
+# Mô hình tính toán quỹ hưu trí (v8)
 
-Tài liệu này mô tả chính xác logic của `tinh-quy-huu-tri.html` (v7, 2026-09-09) và được tái hiện
+Tài liệu này mô tả chính xác logic của `tinh-quy-huu-tri.html` (v8, 2026-09-14) và được tái hiện
 trong `scripts/tinh-quy-huu-tri.js`. Mọi thay đổi công thức phải cập nhật cả ba nơi.
 File `tinh-quy-huu-tri (2).html` là bản v2 cũ, giữ lại để đối chiếu.
 
@@ -49,6 +49,17 @@ còn các khối `meta`, `reserves`, `children`, `recurringExpenses`, `bhxh` thi
     "neededFromAge": "40",      // > retireAge thì được chiết khấu theo postReturn
     "inflate": true,            // nhân (1+π)^Y
     "tier": "A", "note": "..."
+  }],
+  "reviews": [{                 // MỚI v8: check-list tổng kết hàng năm
+    "year": "2027",
+    "extraAmount": 100000000,   // tài sản phát sinh thêm trong năm, ngoài mục Tài sản
+    "locked": true,             // đã bấm "Chốt" chưa
+    "lockedNetAssets": 4900000000,   // 3 trường locked* chỉ có khi locked = true,
+    "lockedTarget": 5415588414,      // đông cứng tại lúc chốt, không đổi khi kế hoạch đổi
+    "lockedMonthlySaving": 33797025,
+    "lockedOn": "2027-12-28",
+    "note": "thưởng cuối năm",
+    "checks": { "assets": true, "bhxh": true, "costs": false, "saving": false, "exported": false }
   }],
   "bhxh": {                     // MỚI v3: BHXH tự nguyện
     "sex": "nam",               // nam (hưu 62) | nu (hưu 60)
@@ -163,6 +174,7 @@ trong đó `assetsAtYear(t)` dùng lại logic 2.2 nhưng chân trời `t`, **c�
 nếu `t < yearsToSplit` thì tài sản chưa bị bán nên **không trừ** `spendElsewhere`
 (công thức 2.2 gốc trừ vô điều kiện — chỉ đúng khi `yearsToSplit ≤ Y`, đúng với dữ liệu hiện tại).
 
+Bảng chạy từ `t = 0` (điểm xuất phát, `target(0)` = tài sản ròng hôm nay) đến `t = Y`.
 Tại `t = Y`, `target(Y) = corpus2` đúng bằng tổng cần có, nên lộ trình luôn hạ cánh đúng đích.
 Mốc **có thể tụt xuống** ở năm bán tài sản (tiền chuyển sang việc khác rời khỏi kế hoạch);
 HTML và script đều chú thích rõ năm đó. Con số này là **tổng tài sản đang nắm giữ đã trừ nợ**,
@@ -215,10 +227,35 @@ chỉ vì thời gian còn lại ngắn đi.
    ngoài đời lương hưu được điều chỉnh theo trượt giá và trả đến hết đời, nên đừng khuyên người dùng
    bỏ BHXH chỉ vì con số này.
 
+### 2.15 Tổng kết hàng năm (mới v8)
+Mỗi dòng `reviews[]` là một lần rà cuối năm, có hai trạng thái.
+
+| Trạng thái | Tài sản ròng | Mục tiêu | Mức tiết kiệm |
+|---|---|---|---|
+| **Chưa chốt** | `Σ assets[].value − currentDebt + extraAmount`, tính lại mỗi lần dữ liệu đổi | `targetForYear(year)` lấy từ bảng lộ trình hiện tại | `save2` hiện tại |
+| **Đã chốt** | `lockedNetAssets` | `lockedTarget` | `lockedMonthlySaving` |
+
+Bấm **Chốt** chép ba giá trị đang tính vào ba trường `locked*` kèm `lockedOn`, rồi khoá ô năm và ô
+phát sinh thêm. Bấm **Tính lại** đặt `locked = false` để quay về tính sống. Ô ghi chú và các ô tick
+luôn sửa được ở cả hai trạng thái.
+
+**Vì sao đông cứng cả mục tiêu** (người dùng chốt 2026-09-14): nếu về sau đổi tuổi nghỉ hưu hay chi phí,
+toàn bộ lộ trình tính lại và mục tiêu của các năm cũ sẽ khác đi, làm lịch sử so sánh bị méo.
+Hệ quả cần lưu ý: dòng đã chốt có thể lệch với bảng Lộ trình hiện hành — đó là chủ ý, không phải lỗi.
+
+`targetForYear(y)`: tìm `y` trong mảng `track` (từ `baseYear` đến `baseYear + Y`).
+Ngoài phạm vi thì trả `null` và hiển thị "chưa có mục tiêu để so".
+
+Năm mục trong check-list, khoá trong `checks`:
+`assets` (cập nhật giá trị tài sản và nợ), `bhxh` (cập nhật số năm đã đóng),
+`costs` (rà chi phí sinh hoạt và học phí), `saving` (kiểm tra mức tiết kiệm hàng tháng),
+`exported` (đã tải file về máy lưu lại).
+
 ## 4. Cảnh báo tự động trong HTML và script
 
 - Bật `bhxh.auto` mà `incomes` vẫn còn dòng tên chứa "lương hưu"/"hưu trí" → cảnh báo cộng hai lần.
 - Tắt `bhxh.auto` và không có dòng lương hưu nào → cảnh báo kế hoạch không có lương hưu.
 - Có chi phí nuôi con rơi vào khoảng từ nay đến lúc nghỉ hưu → cảnh báo khoản đó không bị trừ vào tài sản.
 - `baseYear` nhỏ hơn năm hiện tại → cảnh báo dữ liệu cũ, phải dời mốc trước khi tin con số.
+- `reviews` rỗng → nhắc người dùng thêm dòng tổng kết đầu tiên để bắt đầu theo dõi tiến độ.
 Script cũng trả về mảng `warnings` tương ứng khi chạy `--json`, và in ở đầu báo cáo.

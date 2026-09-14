@@ -1,6 +1,6 @@
 # Hồ sơ kế hoạch hưu trí hiện tại
 
-Cập nhật lần cuối: 2026-09-09 (khớp HTML v7), từ `du-lieu-quy-huu-tri.json` (schema v7). **Đây là dữ liệu người dùng
+Cập nhật lần cuối: 2026-09-14 (khớp HTML v8), từ `du-lieu-quy-huu-tri.json` (schema v8). **Đây là dữ liệu người dùng
 tự nhập**, không còn là giả định của agent, trừ các mục ghi rõ. Bản v2 gốc lưu ở `du-lieu-quy-huu-tri.v1-backup.json`.
 Khi dữ liệu gốc thay đổi, chạy lại script và cập nhật file này.
 
@@ -86,7 +86,7 @@ Người dùng đã giảm hai quỹ từ 1 tỷ xuống 500 triệu mỗi kho�
 hôm nay vẫn là 500 triệu ở tuổi 40 — sức mua thực tế giảm khoảng 11% sau 4 năm lạm phát 3%.
 Chưa có quỹ đệm thị trường, chăm sóc tuổi già, sửa chữa lớn, dự phòng cho con (xem `quy-du-phong.md`).
 
-## 5. Kết quả baseline (script và HTML v7 khớp từng đồng, 2026-09-09)
+## 5. Kết quả baseline (script và HTML v8 khớp từng đồng)
 
 | Chỉ số | Giá trị |
 |---|---|
@@ -135,12 +135,19 @@ phải đạt các mốc sau vào cuối mỗi năm. Đây là câu trả lời 
 
 | Cuối năm | Tuổi | Mục tiêu tài sản |
 |---|---|---|
+| 2026 | 36 — điểm xuất phát | 4,80 tỷ |
 | 2027 | 37 | 5,42 tỷ |
 | 2028 | 38 | 6,04 tỷ |
 | 2029 | 39 | 6,68 tỷ |
 | 2030 | 40 — nghỉ hưu | 4,34 tỷ |
 
 Mốc 2030 tụt xuống vì năm đó bán nhà và chuyển 3 tỷ sang việc khác, rời khỏi kế hoạch hưu trí.
+
+## 5a3. Tổng kết hàng năm — chưa có dòng nào
+
+Khối `reviews` đang rỗng. Cuối mỗi năm người dùng thêm một dòng trong mục "Tổng kết hàng năm" của HTML,
+xem mình đi trước hay chậm so với bảng lộ trình ở mục 5a2, rồi bấm Chốt để đông cứng lại.
+Mốc đầu tiên nên chốt là **cuối 2026, mục tiêu 4,80 tỷ** (điểm xuất phát).
 
 ## 5b. What-if đã chạy trên dữ liệu hiện tại (2026-09-09)
 
@@ -169,7 +176,7 @@ nên **không được khuyên người dùng bỏ BHXH dựa trên con số nà
 
 ## 6. Câu hỏi còn mở (để trao đổi tiếp với người dùng)
 
-Người dùng mở `tinh-quy-huu-tri.html` (v7) để rà soát và nói cần chỉnh gì tiếp.
+Người dùng mở `tinh-quy-huu-tri.html` để rà soát và nói cần chỉnh gì tiếp.
 
 **Ưu tiên cao — ảnh hưởng trực tiếp con số:**
 

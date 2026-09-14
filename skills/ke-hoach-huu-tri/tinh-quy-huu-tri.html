@@ -139,6 +139,17 @@
   .track-row .track-when{font-size:13px;color:var(--ink-soft);}
   .track-row .track-goal{font-family:var(--serif);font-size:17px;font-weight:600;color:var(--pine-900);}
   .track-row .track-note{width:100%;font-size:11.5px;color:var(--gold);line-height:1.5;}
+  .track-row.is-start{background:var(--stone-50);margin:0 -8px;padding:9px 8px;border-radius:3px;}
+  .rv-year{max-width:110px;flex:0 0 auto;}
+  .rv-verdict{flex:1;font-size:13.5px;font-weight:600;min-width:180px;}
+  .rv-checks{display:flex;flex-wrap:wrap;gap:8px 18px;margin:12px 0 4px;padding-top:10px;border-top:1px dashed var(--line);}
+  .rv-checks label.chk{font-size:12.5px;color:var(--ink-soft);gap:7px;}
+  .rv-checks label.chk input[type=checkbox]{width:16px;height:16px;}
+  .item-row.locked{background:var(--stone-50);border-color:var(--pine-500);}
+  .rv-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .rv-btns button{padding:8px 13px;border-radius:3px;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink);}
+  .rv-btns button.primary{background:var(--pine-700);color:var(--stone-50);border-color:var(--pine-700);font-weight:600;}
+  .rv-state{font-size:11.5px;color:#8C9089;margin-top:8px;}
   label.chk input[type=checkbox]{width:18px;height:18px;flex-shrink:0;}
   .auto-list{font-size:12.5px;color:var(--ink-soft);margin:12px 0 0;line-height:1.6;}
   .phase-row .phase-detail{font-size:11.5px;color:#8C9089;width:100%;}
@@ -452,6 +463,14 @@
       <span class="label">Mức tiết kiệm giả định để đi đúng lộ trình (ngoài các khoản đang có)</span>
       <span class="value" id="track-save">–</span>
     </div>
+  </div>
+
+  <div class="card method">
+    <span class="tag">Tổng kết hàng năm</span>
+    <h2>Mỗi năm rà một lần, xem có bám kịp kế hoạch không</h2>
+    <div class="desc">Mỗi cuối năm thêm một dòng. Tài sản ròng <strong>tự tính</strong> từ mục Tài sản trừ nợ, cộng ô "phát sinh thêm" nếu năm đó có khoản ngoài dự tính. Xem xong bấm <strong>Chốt</strong> để đông cứng con số cùng mục tiêu và mức tiết kiệm của đúng năm đó — sau này sửa kế hoạch cũng không làm sai lịch sử. Nhập nhầm thì bấm <strong>Tính lại</strong> để mở khoá.</div>
+    <div id="reviewRows"></div>
+    <button type="button" class="add-btn" id="addReviewBtn">+ Thêm tổng kết năm</button>
   </div>
 
   <div class="card summary">
@@ -818,6 +837,102 @@ function addReserveRow(name, amount, neededFromAge, inflate, tier, note){
 document.getElementById('addReserveBtn').addEventListener('click', () => { addReserveRow('', 0, val('retireAge'), true, 'A', ''); calculate(); });
 
 // ---------------------------------------------------------------
+// Tổng kết hàng năm
+// ---------------------------------------------------------------
+const RV_CHECKS = [
+  ['assets',   'Cập nhật giá trị tài sản và nợ'],
+  ['bhxh',     'Cập nhật số năm đã đóng BHXH'],
+  ['costs',    'Rà chi phí sinh hoạt và học phí thực tế'],
+  ['saving',   'Kiểm tra mức tiết kiệm hàng tháng'],
+  ['exported', 'Đã tải file dữ liệu về máy lưu lại']
+];
+
+function setReviewLockUI(row){
+  const locked = row.dataset.locked === '1';
+  row.classList.toggle('locked', locked);
+  row.querySelector('.rv-year').disabled = locked;
+  row.querySelector('.rv-extra').disabled = locked;
+  row.querySelector('.rv-lock').hidden = locked;
+  row.querySelector('.rv-unlock').hidden = !locked;
+}
+
+function addReviewRow(year, extraAmount, locked, lockedNetAssets, lockedTarget, lockedMonthlySaving, lockedOn, note, checks){
+  const container = document.getElementById('reviewRows');
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  checks = checks || {};
+  row.dataset.locked = locked ? '1' : '0';
+  row.dataset.lockedNet = lockedNetAssets === null || lockedNetAssets === undefined ? '' : lockedNetAssets;
+  row.dataset.lockedTarget = lockedTarget === null || lockedTarget === undefined ? '' : lockedTarget;
+  row.dataset.lockedSaving = lockedMonthlySaving === null || lockedMonthlySaving === undefined ? '' : lockedMonthlySaving;
+  row.dataset.lockedOn = lockedOn || '';
+  const checkHtml = RV_CHECKS.map(c =>
+    `<label class="chk"><input type="checkbox" class="rv-c" data-k="${c[0]}" ${checks[c[0]] ? 'checked' : ''}><span>${c[1]}</span></label>`
+  ).join('');
+  row.innerHTML = `
+    <div class="row-top">
+      <input type="number" class="rv-year" value="${year}" min="2000" max="2100">
+      <span class="rv-verdict">–</span>
+      <button type="button" class="remove-btn">×</button>
+    </div>
+    <div class="grid two">
+      <label>Tài sản phát sinh thêm trong năm (ngoài mục Tài sản)
+        <input type="text" inputmode="numeric" class="rv-extra money-input" value="${formatVN(extraAmount || 0)}">
+        <span class="unit-hint">đơn vị: VNĐ, để 0 nếu không có</span>
+      </label>
+      <label>Ghi chú
+        <input type="text" class="rv-note" placeholder="VD: thưởng cuối năm, trả bớt nợ..." value="${note || ''}">
+      </label>
+    </div>
+    <div class="result-line">
+      <span class="label">Tài sản ròng thực tế (tổng mục Tài sản − nợ + phát sinh thêm)</span>
+      <span class="value rv-net">–</span>
+    </div>
+    <div class="result-line">
+      <span class="label">Mục tiêu lộ trình của năm đó</span>
+      <span class="value rv-target">–</span>
+    </div>
+    <div class="result-line">
+      <span class="label">Mức cần tiết kiệm thêm mỗi tháng tại thời điểm đó</span>
+      <span class="value rv-saving">–</span>
+    </div>
+    <div class="rv-checks">${checkHtml}</div>
+    <div class="rv-btns">
+      <button type="button" class="rv-lock primary">Chốt số năm này</button>
+      <button type="button" class="rv-unlock" hidden>Tính lại</button>
+    </div>
+    <div class="rv-state"></div>
+  `;
+  container.appendChild(row);
+  row.querySelector('.remove-btn').addEventListener('click', () => { row.remove(); calculate(); });
+  row.querySelector('.rv-extra').addEventListener('input', onMoneyInput);
+  row.querySelector('.rv-year').addEventListener('input', calculate);
+  row.querySelector('.rv-note').addEventListener('input', () => {});
+  row.querySelectorAll('.rv-c').forEach(el => el.addEventListener('change', () => {}));
+  row.querySelector('.rv-lock').addEventListener('click', () => {
+    row.dataset.locked = '1';
+    row.dataset.lockedNet = row.dataset.liveNet || '0';
+    row.dataset.lockedTarget = row.dataset.liveTarget || '';
+    row.dataset.lockedSaving = row.dataset.liveSaving || '0';
+    row.dataset.lockedOn = todayISO();
+    setReviewLockUI(row);
+    calculate();
+    showStatus('Đã chốt số của năm ' + row.querySelector('.rv-year').value);
+  });
+  row.querySelector('.rv-unlock').addEventListener('click', () => {
+    row.dataset.locked = '0';
+    setReviewLockUI(row);
+    calculate();
+    showStatus('Đã mở khoá — số sẽ tính lại theo dữ liệu hiện tại');
+  });
+  setReviewLockUI(row);
+}
+document.getElementById('addReviewBtn').addEventListener('click', () => {
+  addReviewRow(new Date().getFullYear(), 0, false, null, null, null, '', '', {});
+  calculate();
+});
+
+// ---------------------------------------------------------------
 // Mốc thời gian: hiển thị, cảnh báo lệch năm, dời mốc
 // ---------------------------------------------------------------
 let metaLastUpdated = '';
@@ -1181,14 +1296,16 @@ function calculate(){
   });
   const trackContainer = document.getElementById('trackRows');
   trackContainer.innerHTML = '';
-  for(let t = 1; t <= Math.max(yearsToRetire, 0); t++){
+  for(let t = 0; t <= Math.max(yearsToRetire, 0); t++){
     let goal = assetsAtYear(t) + annuityFV(save2, avgRate, t);
     recRows.forEach(r => { goal += annuityFV(r.monthly, r.rate, t); });
     const div = document.createElement('div');
-    div.className = 'track-row' + (t === yearsToRetire ? ' is-retire' : '');
-    const label = t === yearsToRetire
-      ? `Cuối ${baseYear + t} · bạn ${currentAge + t} tuổi — NGHỈ HƯU`
-      : `Cuối ${baseYear + t} · bạn ${currentAge + t} tuổi · còn ${yearsToRetire - t} năm`;
+    div.className = 'track-row' + (t === yearsToRetire ? ' is-retire' : (t === 0 ? ' is-start' : ''));
+    const label = t === 0
+      ? `Hiện tại (${baseYear}) · bạn ${currentAge} tuổi — ĐIỂM XUẤT PHÁT`
+      : (t === yearsToRetire
+        ? `Cuối ${baseYear + t} · bạn ${currentAge + t} tuổi — NGHỈ HƯU`
+        : `Cuối ${baseYear + t} · bạn ${currentAge + t} tuổi · còn ${yearsToRetire - t} năm`);
     const ev = spendEvents[t];
     const evText = ev ? `<span class="track-note">năm này ${ev.map(e => `bán/trích ${e.name}, chuyển ${fmt(e.amount)} sang việc khác nên mốc tụt xuống`).join('; ')}</span>` : '';
     div.innerHTML = `<span class="track-when">${label}</span><span class="track-goal">${fmt(goal)}</span>${evText}`;
@@ -1196,6 +1313,51 @@ function calculate(){
   }
   if(yearsToRetire <= 0) trackContainer.innerHTML = '<div class="track-row"><span class="track-when">Đã đến hoặc qua tuổi nghỉ hưu — không còn giai đoạn tích lũy.</span></div>';
   document.getElementById('track-save').textContent = fmt(save2) + ' / tháng';
+
+  // ---- Tổng kết hàng năm ----
+  const netAssetsNow = totalValueToday - currentDebt;
+  const targetForYear = (y) => {
+    const t = y - baseYear;
+    if(!isFinite(t) || t < 0 || t > yearsToRetire) return null;
+    let g = assetsAtYear(t) + annuityFV(save2, avgRate, t);
+    recRows.forEach(r => { g += annuityFV(r.monthly, r.rate, t); });
+    return g;
+  };
+  document.querySelectorAll('#reviewRows .item-row').forEach(row => {
+    const year = parseFloat(row.querySelector('.rv-year').value) || baseYear;
+    const extra = parseMoney(row.querySelector('.rv-extra').value);
+    const locked = row.dataset.locked === '1';
+    let net, target, saving, state;
+    if(locked){
+      net = parseFloat(row.dataset.lockedNet) || 0;
+      target = row.dataset.lockedTarget === '' ? null : parseFloat(row.dataset.lockedTarget);
+      saving = parseFloat(row.dataset.lockedSaving) || 0;
+      state = 'Đã chốt' + (row.dataset.lockedOn ? ' ngày ' + row.dataset.lockedOn : '') + ' — số cố định, không đổi theo kế hoạch hiện tại.';
+    } else {
+      net = netAssetsNow + extra;
+      target = targetForYear(year);
+      saving = save2;
+      row.dataset.liveNet = net;
+      row.dataset.liveTarget = (target === null ? '' : target);
+      row.dataset.liveSaving = saving;
+      state = 'Chưa chốt — đang tính theo dữ liệu hiện tại, sẽ đổi nếu bạn sửa mục Tài sản.';
+    }
+    row.querySelector('.rv-net').textContent = fmt(net);
+    row.querySelector('.rv-target').textContent = target === null ? 'ngoài phạm vi lộ trình' : fmt(target);
+    row.querySelector('.rv-saving').textContent = fmt(saving) + ' / tháng';
+    row.querySelector('.rv-state').textContent = state;
+    const v = row.querySelector('.rv-verdict');
+    if(target === null){
+      v.textContent = year + ' — chưa có mục tiêu để so';
+      v.style.color = 'var(--ink-soft)';
+    } else if(net >= target){
+      v.textContent = year + ' — ✓ đi trước kế hoạch ' + fmt(net - target);
+      v.style.color = 'var(--pine-700)';
+    } else {
+      v.textContent = year + ' — ⚠ chậm hơn kế hoạch ' + fmt(target - net);
+      v.style.color = 'var(--gold)';
+    }
+  });
 
   renderMeta();
 }
@@ -1252,14 +1414,31 @@ function collectState(){
     const el = document.getElementById(id);
     fields[id] = el.classList.contains('money-input') ? parseMoney(el.value) : el.value;
   });
+  const reviews = [];
+  document.querySelectorAll('#reviewRows .item-row').forEach(row => {
+    const checks = {};
+    row.querySelectorAll('.rv-c').forEach(el => { checks[el.dataset.k] = el.checked; });
+    const locked = row.dataset.locked === '1';
+    reviews.push({
+      year: row.querySelector('.rv-year').value,
+      extraAmount: parseMoney(row.querySelector('.rv-extra').value),
+      locked: locked,
+      lockedNetAssets: locked && row.dataset.lockedNet !== '' ? parseFloat(row.dataset.lockedNet) : null,
+      lockedTarget: locked && row.dataset.lockedTarget !== '' ? parseFloat(row.dataset.lockedTarget) : null,
+      lockedMonthlySaving: locked && row.dataset.lockedSaving !== '' ? parseFloat(row.dataset.lockedSaving) : null,
+      lockedOn: locked ? (row.dataset.lockedOn || '') : '',
+      note: row.querySelector('.rv-note').value,
+      checks: checks
+    });
+  });
   const living = { monthly: moneyVal('expenseMonthly'), note: document.getElementById('expenseNote').value };
   metaLastUpdated = todayISO();
   const meta = { lastUpdated: metaLastUpdated, version: 7 };
-  return { meta, living, assets, incomes, recurringSavings, recurringExpenses, children, reserves, bhxh, fields };
+  return { meta, living, assets, incomes, recurringSavings, recurringExpenses, children, reserves, bhxh, reviews, fields };
 }
 
 function applyState(state){
-  ['assetRows','postReturnRows','incomeRows','recurringRows','expenseRows','childRows','reserveRows'].forEach(id => document.getElementById(id).innerHTML = '');
+  ['assetRows','postReturnRows','incomeRows','recurringRows','expenseRows','childRows','reserveRows','reviewRows'].forEach(id => document.getElementById(id).innerHTML = '');
   if(state.assets && state.assets.length) state.assets.forEach(a => addAssetRow(a.name, a.type, a.value, a.preRate, a.yearsToSplit, a.spendElsewhere, a.postRate));
   else addAssetRow('Tiết kiệm / đầu tư', 'financial', 0, 7, 0, 0, 7);
   (state.incomes || []).forEach(i => addIncomeRow(i.name, i.monthly, i.startAge, i.endAge === '' ? null : i.endAge));
@@ -1267,6 +1446,7 @@ function applyState(state){
   (state.recurringExpenses || []).forEach(e => addExpenseRow(e.name, e.monthly, e.startAge, e.endAge === '' ? null : e.endAge));
   (state.children || []).forEach(c => addChildRow(c.name, c.birthYear, c.scenario, c.schoolMonthly, c.uniYearly));
   (state.reserves || []).forEach(r => addReserveRow(r.name, r.amount, r.neededFromAge, r.inflate, r.tier, r.note));
+  (state.reviews || []).forEach(r => addReviewRow(r.year, r.extraAmount, r.locked, r.lockedNetAssets, r.lockedTarget, r.lockedMonthlySaving, r.lockedOn, r.note, r.checks));
   if(state.bhxh){
     document.getElementById('bhxhSex').value = state.bhxh.sex || 'nam';
     document.getElementById('bhxhPaidYears').value = state.bhxh.paidYears || 0;

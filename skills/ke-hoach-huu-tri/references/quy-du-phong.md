@@ -1,6 +1,6 @@
 # Các quỹ để riêng và chi phí ngoài sinh hoạt sau nghỉ hưu
 
-Trạng thái 2026-09-09: cơ chế đã có đủ trong HTML v7, JSON và script (`reserves`, `recurringExpenses`,
+Trạng thái 2026-09-14: cơ chế đã có đủ trong HTML, JSON và script (`reserves`, `recurringExpenses`,
 `children`, `bhxh` — schema ở `mo-hinh-tinh-toan.md` mục 1). Tài liệu này là **danh sách đề xuất**;
 số liệu thực tế người dùng đang dùng nằm ở `ho-so-hien-tai.md`, không phải ở đây.
 

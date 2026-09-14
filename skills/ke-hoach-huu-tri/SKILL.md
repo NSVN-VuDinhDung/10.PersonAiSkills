@@ -16,10 +16,10 @@ lên kế hoạch nghỉ hưu của người dùng mà không cần đọc lại
 | `references/mo-hinh-tinh-toan.md` | Cần hiểu công thức, ý nghĩa từng trường JSON, điểm mạnh/yếu của mô hình. |
 | `references/quy-du-phong.md` | Danh sách đề xuất quỹ để riêng (y tế, cầu nối thu nhập, đệm thị trường...), BHXH/BHYT, chi phí con cái, và khoản nào đã/chưa vào JSON. |
 | `scripts/bhxh-tu-nguyen.js` | Ước tính chi phí đóng BHXH tự nguyện và lương hưu theo 2 tham số: mức thu nhập đóng và số năm đóng. |
-| `scripts/tinh-quy-huu-tri.js` | Cần tính lại số hoặc chạy kịch bản what-if. Tái hiện đúng 100% logic của HTML v7 (đã đối chiếu bằng Chrome headless). |
+| `scripts/tinh-quy-huu-tri.js` | Cần tính lại số hoặc chạy kịch bản what-if. Tái hiện đúng 100% logic của HTML v8 (đã đối chiếu bằng Chrome headless). |
 
-Nguồn dữ liệu gốc (sự thật duy nhất): `du-lieu-quy-huu-tri.json` ở thư mục gốc dự án (schema v7).
-Công cụ giao diện: `tinh-quy-huu-tri.html` (v7, mở bằng trình duyệt kể cả điện thoại, nhập tay, xuất/nhập JSON).
+Nguồn dữ liệu gốc (sự thật duy nhất): `du-lieu-quy-huu-tri.json` ở thư mục gốc dự án (schema v8).
+Công cụ giao diện: `tinh-quy-huu-tri.html` (v8, mở bằng trình duyệt kể cả điện thoại, nhập tay, xuất/nhập JSON).
 `tinh-quy-huu-tri (2).html` là bản v2 cũ, chỉ để đối chiếu. `du-lieu-quy-huu-tri.v1-backup.json` là dữ liệu v2 gốc.
 
 Quy tắc đồng bộ: mọi thay đổi công thức phải làm ở cả ba nơi (HTML, script, `mo-hinh-tinh-toan.md`),
@@ -48,7 +48,9 @@ rồi kiểm chứng bằng cách nhúng JSON vào bản sao HTML, chạy Chrome
    node .claude/skills/ke-hoach-huu-tri/scripts/tinh-quy-huu-tri.js du-lieu-quy-huu-tri.json --set expenseMonthly=25000000
    ```
    Script in mảng `warnings` ở đầu báo cáo (lệch năm, trùng lương hưu, chi phí con trước nghỉ hưu) — luôn đọc và nhắc người dùng.
-   Cuối báo cáo có **lộ trình tích lũy theo năm**: dùng nó để trả lời "cuối năm sau tôi phải có bao nhiêu".
+   Cuối báo cáo có **lộ trình tích lũy theo năm**: dùng nó để trả lời "cuối năm sau tôi phải có bao nhiêu",
+   và **tổng kết hàng năm** (`reviews`): dùng nó để nói người dùng mấy năm qua bám kế hoạch ra sao.
+   Dòng đã chốt giữ nguyên mục tiêu của thời điểm chốt, nên có thể lệch bảng lộ trình hiện hành — đừng "sửa" nó.
    Kịch bản đổi tài sản / thu nhập / tiết kiệm: sao chép JSON sang scratchpad, sửa, rồi chạy script trên bản sao.
    ```bash
    # BHXH tự nguyện: chi phí/tháng và lương hưu ước tính

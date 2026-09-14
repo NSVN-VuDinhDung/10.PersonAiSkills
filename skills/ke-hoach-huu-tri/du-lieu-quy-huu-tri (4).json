@@ -4,7 +4,7 @@
     "version": 6
   },
   "living": {
-    "monthly": 15000000,
+    "monthly": 20000000,
     "note": "Sinh hoạt cơ bản, chưa gồm học phí con, BHXH, BHYT"
   },
   "assets": [
@@ -47,6 +47,12 @@
       "name": "Thu nhập khác",
       "monthly": 10000000,
       "startAge": "40",
+      "endAge": ""
+    },
+    {
+      "name": "Lương hưu của vợ",
+      "monthly": 6000000,
+      "startAge": "60",
       "endAge": ""
     }
   ],
@@ -125,7 +131,6 @@
     "volYears": "4",
     "auto": true
   },
-  "reviews": [],
   "fields": {
     "currentDebt": 1400000000,
     "currentAge": "36",

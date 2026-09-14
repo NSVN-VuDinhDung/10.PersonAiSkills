@@ -1,7 +1,7 @@
 {
   "meta": {
-    "lastUpdated": "2026-09-09",
-    "version": 6
+    "lastUpdated": "2026-09-14",
+    "version": 7
   },
   "living": {
     "monthly": 15000000,
@@ -74,6 +74,12 @@
       "monthly": 2000000,
       "startAge": "40",
       "endAge": ""
+    },
+    {
+      "name": "Bảo hiểm tự nguyện(dai-ichi)",
+      "monthly": 20000000,
+      "startAge": "36",
+      "endAge": "50"
     }
   ],
   "children": [
@@ -103,7 +109,7 @@
     {
       "name": "Y tế khẩn cấp / bệnh hiểm nghèo",
       "amount": 500000000,
-      "neededFromAge": "40",
+      "neededFromAge": "41",
       "inflate": false,
       "tier": "A",
       "note": "Chỉ rút khi có chẩn đoán bệnh hiểm nghèo, tai nạn nặng"
@@ -111,7 +117,7 @@
     {
       "name": "Cầu nối sinh hoạt khi mất thu nhập",
       "amount": 500000000,
-      "neededFromAge": "40",
+      "neededFromAge": "41",
       "inflate": false,
       "tier": "A",
       "note": "Dùng khi thu nhập khác ngừng, đến khi kiếm lại được hoặc đến tuổi lương hưu"
@@ -129,7 +135,7 @@
   "fields": {
     "currentDebt": 1400000000,
     "currentAge": "36",
-    "retireAge": "40",
+    "retireAge": "41",
     "lifeExpectancy": "80",
     "inflation": "3",
     "baseYear": "2026"

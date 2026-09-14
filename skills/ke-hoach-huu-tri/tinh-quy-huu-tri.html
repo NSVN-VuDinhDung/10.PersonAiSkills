@@ -17,7 +17,7 @@
     --gold:#9C7A25;
     --gold-soft:#D9C58F;
     --line:#DBD4C3;
-    --serif: Georgia, 'Times New Roman', 'Noto Serif', serif;
+    --serif: 'Noto Serif', Cambria, 'Times New Roman', serif; /* không dùng Georgia: thiếu dấu tiếng Việt chồng (ầ, ế...) */
     --sans: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
   }
   *{box-sizing:border-box;}
@@ -142,6 +142,14 @@
   .track-row.is-start{background:var(--stone-50);margin:0 -8px;padding:9px 8px;border-radius:3px;}
   .rv-year{max-width:110px;flex:0 0 auto;}
   .rv-verdict{flex:1;font-size:13.5px;font-weight:600;min-width:180px;}
+  /* Hai cột dùng chung hàng (nhãn / ô nhập / gợi ý) để nhãn dài xuống dòng không đẩy lệch ô nhập */
+  @media (min-width:520px){
+    @supports (grid-template-rows:subgrid){
+      .rv-fields{grid-template-rows:auto auto auto;row-gap:0;}
+      .rv-fields > label{display:grid;grid-row:span 3;grid-template-rows:subgrid;row-gap:6px;align-items:end;}
+      .rv-fields > label > .unit-hint{align-self:start;}
+    }
+  }
   .rv-checks{display:flex;flex-wrap:wrap;gap:8px 18px;margin:12px 0 4px;padding-top:10px;border-top:1px dashed var(--line);}
   .rv-checks label.chk{font-size:12.5px;color:var(--ink-soft);gap:7px;}
   .rv-checks label.chk input[type=checkbox]{width:16px;height:16px;}
@@ -875,7 +883,7 @@ function addReviewRow(year, extraAmount, locked, lockedNetAssets, lockedTarget, 
       <span class="rv-verdict">–</span>
       <button type="button" class="remove-btn">×</button>
     </div>
-    <div class="grid two">
+    <div class="grid two rv-fields">
       <label>Tài sản phát sinh thêm trong năm (ngoài mục Tài sản)
         <input type="text" inputmode="numeric" class="rv-extra money-input" value="${formatVN(extraAmount || 0)}">
         <span class="unit-hint">đơn vị: VNĐ, để 0 nếu không có</span>
